@@ -1,20 +1,5 @@
-local progress_blocks = {
-	"▏",
-	"▎",
-	"▍",
-	"▌",
-	"▋",
-	"▊",
-	"▉",
-	"█",
-}
-
-local arrows = {
-	Left = "⬅",
-	Down = "⬇",
-	Up = "⬆",
-	Right = "➡",
-}
+---@class StratHero.Ui.View
+---@field render fun(game: StratHero.Game, win_config: vim.api.keyset.win_config): NuiLine[]
 
 ---The UI for the game.
 ---The UI is managed by the Game object, and is *only* responsible for drawing its current
@@ -125,19 +110,6 @@ function Ui:draw(game)
 		return
 	end
 
-	local percent_remaining = 1 - (math.max(0, game.elapsed - game.COUNTDOWN_DELAY) / game.LENGTH)
-
-	local raw_width = percent_remaining * 40
-	local bar_width = math.floor(raw_width)
-	local bar_tail = raw_width - bar_width
-
-	local block = ""
-	if raw_width > 0 and bar_tail > 0 then
-		block = progress_blocks[math.floor(bar_tail * 8) + 1]
-	end
-
-	local progress_bar = progress_blocks[8]:rep(bar_width) .. block
-
 	local config = vim.api.nvim_win_get_config(self.win)
 
 	local Line = require("nui.line")
@@ -148,57 +120,13 @@ function Ui:draw(game)
 
 	local lines
 	if game.state == "starting" then
-		config.footer = progress_blocks[8]:rep(40)
-
-		local countdown = (game.COUNTDOWN_DELAY - game.elapsed) / 1e9
-		lines = {
-			Line(),
-			Line({ Text("Get ready!", "Title") }),
-			Line(),
-			Line({ Text(("Starting in %.1fs"):format(countdown), "Comment") }),
-			Line(),
-		}
+		lines = require("strat-hero.view.countdown").render(game, config)
 	elseif game.state == "playing" then
-		config.title = string.format("Score: %d, Level: %d, Time: %dms", game.score, game.level, game.elapsed / 1e6)
-		config.footer = progress_bar
-
-		local sequence = Line()
-
-		local stratagem = game.current
-		local entered = game.entered
-		local did_fail = game.did_fail
-
-		for i, motion in ipairs(stratagem.sequence) do
-			local hl
-			if did_fail then
-				hl = "DiagnosticError"
-			else
-				if i < (entered + 1) then
-					hl = "DiagnosticOk"
-				else
-					hl = "Comment"
-				end
-			end
-			sequence:append(string.format(" %s ", arrows[motion]), hl)
-		end
-
-		lines = {
-			Line(),
-			Line({ Text(stratagem.name, "Title") }),
-			Line(),
-			sequence,
-		}
+		lines = require("strat-hero.view.gameview").render(game, config)
 	elseif game.state == "over" then
-		-- TODO
+		lines = require("strat-hero.view.gameover").render(game, config)
 	elseif game.state == "ready" then
-		config.footer = progress_blocks[8]:rep(40)
-		lines = {
-			Line(),
-			Line(),
-			Line({ Text("Press a move key to start", "Title") }),
-			Line(),
-			Line(),
-		}
+		lines = require("strat-hero.view.splash").render(game, config)
 	end
 
 	local buf = self:get_buf()
