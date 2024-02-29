@@ -82,7 +82,6 @@ function Ui:mount()
 		title_pos = "left",
 		footer = "",
 		footer_pos = "left",
-		zindex = 51,
 	})
 end
 
@@ -134,7 +133,7 @@ function Ui:draw(game)
 	if lines then
 		for i, line in ipairs(lines) do
 			local width = line:width()
-			if width <= 40 then
+			if width <= config.width then
 				local texts = line._texts
 				table.insert(texts, 1, Text(string.rep(" ", math.floor((40 - width) / 2))))
 				line = Line(texts)

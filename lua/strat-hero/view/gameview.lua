@@ -5,7 +5,12 @@ function GameView.render(game, config)
 	local Line = require("nui.line")
 	local Text = require("nui.text")
 
-	config.title = string.format("Score: %d, Level: %d, Time: %dms", game.score, game.level, game.elapsed / 1e6)
+	config.title = string.format(
+		"SCORE %d%sROUND %d",
+		game.score,
+		string.rep(" ", 40 - (#("score " .. game.score) + #("round " .. game.level))),
+		game.level
+	)
 
 	local percent_remaining = 1 - (math.max(0, game.elapsed - game.COUNTDOWN_DELAY) / game.LENGTH)
 
@@ -35,12 +40,10 @@ function GameView.render(game, config)
 		local hl
 		if did_fail then
 			hl = "DiagnosticError"
+		elseif i < (entered + 1) then
+			hl = "DiagnosticOk"
 		else
-			if i < (entered + 1) then
-				hl = "DiagnosticOk"
-			else
-				hl = "Comment"
-			end
+			hl = "Comment"
 		end
 		sequence:append(string.format(" %s ", arrows[motion]), hl)
 	end

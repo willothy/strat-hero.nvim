@@ -112,14 +112,9 @@ function Game:pick_stratagem()
 end
 
 function Game:success()
-	-- TODO: separate game "engine" timer (tick) and in-game level timer
-	-- so that we can pause the timer for a tiny bit to show feedback.
-	-- self.timer:stop()
-
 	vim.defer_fn(function()
 		self.current = self:pick_stratagem()
 		self.entered = 0
-		-- self.timer:start()
 	end, self.SUCCESS_DELAY)
 end
 
