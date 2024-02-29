@@ -151,13 +151,18 @@ function Ui:draw(game)
 
 	local stratagem = game.current
 	local entered = game.entered
+	local did_fail = game.did_fail
 
 	for i, motion in ipairs(stratagem.sequence) do
 		local hl
-		if i < (entered + 1) then
-			hl = "DiagnosticOk"
+		if did_fail then
+			hl = "DiagnosticError"
 		else
-			hl = "Comment"
+			if i < (entered + 1) then
+				hl = "DiagnosticOk"
+			else
+				hl = "Comment"
+			end
 		end
 		sequence:append(string.format(" %s ", arrows[motion]), hl)
 	end

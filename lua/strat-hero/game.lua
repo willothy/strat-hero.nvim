@@ -30,12 +30,13 @@ local motion_keys = {
 ---@field public state StratHero.State
 ---@field public score number
 ---@field public level number
+---@field public did_fail boolean
+---@field public current StratHero.Stratagem
+---@field public entered integer
 ---@field timer StratHero.Timer
 ---@field started integer
 ---@field elapsed integer
 ---@field stratagems StratHero.Stratagem[]
----@field current StratHero.Stratagem
----@field entered integer
 ---@field ui StratHero.Ui
 ---@field ns integer
 local Game = {}
@@ -104,7 +105,10 @@ end
 
 function Game:fail()
 	self.entered = 0
-	-- todo: show some feedback
+	self.did_fail = true
+	vim.defer_fn(function()
+		self.did_fail = false
+	end, 300)
 end
 
 function Game:start()
