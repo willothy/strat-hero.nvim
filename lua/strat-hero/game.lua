@@ -1,6 +1,8 @@
 local Stratagems = require("strat-hero.stratagems")
 local Ui = require("strat-hero.ui")
 
+local timeout
+
 local motion_keys = {
 	-- Vim mode
 	k = "Up",
@@ -55,13 +57,10 @@ function Game:on_key(motion)
 
 	if expected ~= motion then
 		self:fail()
-		vim.print("fail")
 		return
 	end
 	self.entered = self.entered + 1
-	vim.print("entered")
 	if self.entered == #self.current.sequence then
-		vim.print("success")
 		self:success()
 	end
 end
@@ -92,13 +91,13 @@ function Game:start()
 	if self.started and self.state ~= "over" then
 		return
 	end
+	if timeout == nil then
+		timeout = vim.o.timeoutlen
+	end
+	vim.o.timeoutlen = 0
 	if self.timer == nil or self.timer:is_closing() then
 		self.timer = vim.uv.new_timer()
 	end
-
-	-- self.ns = vim.on_key(function(key)
-	-- 	self:on_key(key)
-	-- end, self.ns)
 
 	self.score = 0
 	self.level = 1
@@ -113,11 +112,15 @@ function Game:start()
 			self:on_key(motion)
 		end)
 	end
+	self.ui:on("BufLeave", function()
+		self:stop()
+		self.ui:unmount()
+	end)
 	self.ui:mount()
 
 	self.timer:start(
-		10,
-		10,
+		16,
+		16,
 		vim.schedule_wrap(function()
 			self.elapsed = vim.uv.hrtime() - self.started
 			self.ui:draw(self)
@@ -135,6 +138,10 @@ function Game:stop()
 	end
 	self.state = "over"
 	self.ui:draw(self)
+	if timeout ~= nil then
+		vim.o.timeoutlen = timeout
+	end
+	timeout = nil
 end
 
 return Game

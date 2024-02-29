@@ -37,7 +37,39 @@ function Ui:get_buf()
 	end
 
 	self.buf = vim.api.nvim_create_buf(false, true)
+
+	for k, v in pairs({
+		swapfile = false,
+		undofile = false,
+		buflisted = false,
+		buftype = "nofile",
+		filetype = "strat-hero",
+	}) do
+		vim.api.nvim_set_option_value(k, v, { buf = self.buf })
+	end
+
 	return self.buf
+end
+
+function Ui:on(event, callback, opts)
+	opts = opts or {}
+	local pattern, buffer
+	if opts.user then
+		pattern = event
+		event = "User"
+	end
+	if opts.buffer ~= false then
+		buffer = self:get_buf()
+	end
+	vim.api.nvim_create_autocmd(event, {
+		pattern = pattern,
+		callback = callback,
+		buffer = buffer,
+	})
+end
+
+function Ui:off(event_id)
+	vim.api.nvim_del_autocmd(event_id)
 end
 
 function Ui:mount()
