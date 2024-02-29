@@ -1,5 +1,6 @@
 local Stratagems = require("strat-hero.stratagems")
 local Ui = require("strat-hero.ui")
+local Timer = require("strat-hero.timer")
 
 local timeout
 
@@ -29,7 +30,7 @@ local motion_keys = {
 ---@field public state StratHero.State
 ---@field public score number
 ---@field public level number
----@field timer uv_timer_t
+---@field timer StratHero.Timer
 ---@field started integer
 ---@field elapsed integer
 ---@field stratagems StratHero.Stratagem[]
@@ -48,8 +49,20 @@ function Game.new()
 	self.state = "ready"
 	self.stratagems = Stratagems.list({})
 	self.ui = Ui.new()
+	self.timer = Timer.new(16, function()
+		self:tick()
+	end)
 
 	return setmetatable(self, { __index = Game })
+end
+
+function Game:tick()
+	self.elapsed = vim.uv.hrtime() - self.started
+	self.ui:draw(self)
+
+	-- if self.elapsed > Game.LENGTH then
+	-- 	self:stop()
+	-- end
 end
 
 function Game:on_key(motion)
@@ -78,8 +91,15 @@ function Game:pick_stratagem()
 end
 
 function Game:success()
-	self.current = self:pick_stratagem()
-	self.entered = 0
+	-- TODO: separate game "engine" timer (tick) and in-game level timer
+	-- so that we can pause the timer for a tiny bit to show feedback.
+	-- self.timer:stop()
+
+	vim.defer_fn(function()
+		self.current = self:pick_stratagem()
+		self.entered = 0
+		-- self.timer:start()
+	end, 150)
 end
 
 function Game:fail()
@@ -95,9 +115,6 @@ function Game:start()
 		timeout = vim.o.timeoutlen
 	end
 	vim.o.timeoutlen = 0
-	if self.timer == nil or self.timer:is_closing() then
-		self.timer = vim.uv.new_timer()
-	end
 
 	self.score = 0
 	self.level = 1
@@ -118,24 +135,11 @@ function Game:start()
 	end)
 	self.ui:mount()
 
-	self.timer:start(
-		16,
-		16,
-		vim.schedule_wrap(function()
-			self.elapsed = vim.uv.hrtime() - self.started
-			self.ui:draw(self)
-
-			-- if self.elapsed > Game.LENGTH then
-			-- 	self:stop()
-			-- end
-		end)
-	)
+	self.timer:start()
 end
 
 function Game:stop()
-	if self.timer and not self.timer:is_closing() then
-		self.timer:stop()
-	end
+	self.timer:stop()
 	self.state = "over"
 	self.ui:draw(self)
 	if timeout ~= nil then
