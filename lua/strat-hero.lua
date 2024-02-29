@@ -1,25 +1,5 @@
 local M = {}
 
-local motion_keys = {
-	-- Vim mode
-	k = "Up",
-	j = "Down",
-	h = "Left",
-	l = "Right",
-
-	-- Helldivers mode
-	w = "Up",
-	s = "Down",
-	a = "Left",
-	d = "Right",
-
-	-- Skill issue mode (arrow keys)
-	["<Up>"] = "Up",
-	["<Down>"] = "Down",
-	["<Left>"] = "Left",
-	["<Right>"] = "Right",
-}
-
 -- TODO:
 -- 1. Create a command to start the game
 -- 2. Manage the game progress with a timer

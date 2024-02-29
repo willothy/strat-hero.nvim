@@ -647,7 +647,9 @@ function M.list(filter)
 		end
 	end
 
-	return iter:totable()
+	return iter:map(function(_, strat)
+		return strat
+	end):totable()
 end
 
 ---@return string[]
