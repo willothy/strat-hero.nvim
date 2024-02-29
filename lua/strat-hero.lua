@@ -20,8 +20,6 @@ function M.setup()
 		local game = Game.new()
 		game:show()
 
-		-- game:start()
-
 		_G.game = game
 	end, {
 		nargs = 0,
