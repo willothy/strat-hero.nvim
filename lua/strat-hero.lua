@@ -1,7 +1,5 @@
 local M = {}
 
-local stratagems = require("strat-hero.stratagems")
-
 local motion_keys = {
 	-- Vim mode
 	k = "Up",
@@ -30,12 +28,32 @@ local motion_keys = {
 -- 5. Subcommands / bang to stop / restart the game
 
 function M.setup()
+	local Game = require("strat-hero.game")
 	vim.api.nvim_create_user_command("StratHero", function()
-		-- todo
+		pcall(function()
+			if _G.game then
+				_G.game:stop()
+				_G.game = nil
+			end
+		end)
+		local game = Game.new()
+
+		game:start()
+
+		_G.game = game
 	end, {
 		nargs = 0,
 		bang = false,
 	})
 end
+
+for k in pairs(package.loaded) do
+	if k:match("^strat%-hero") then
+		package.loaded[k] = nil
+	end
+end
+vim.opt.rtp:prepend(vim.uv.cwd())
+M.setup()
+vim.cmd.StratHero()
 
 return M
