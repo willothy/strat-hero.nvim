@@ -24,7 +24,7 @@ local motion_keys = {
 	["<Right>"] = "Right",
 }
 
----@alias StratHero.State "ready" | "playing" | "over"
+---@alias StratHero.State "ready" | "starting" | "playing" | "over"
 
 ---@class StratHero.Game
 ---@field public state StratHero.State
@@ -35,6 +35,7 @@ local motion_keys = {
 ---@field public entered integer
 ---@field timer StratHero.Timer
 ---@field started integer
+---@field real_start integer Start with added countdown delay
 ---@field elapsed integer
 ---@field stratagems StratHero.Stratagem[]
 ---@field ui StratHero.Ui
@@ -42,23 +43,38 @@ local motion_keys = {
 local Game = {}
 
 Game.LENGTH = 5e9 -- todo: make dynamic
+Game.TICKRATE = 16 -- ms
+Game.SUCCESS_DELAY = 150 -- ms
+Game.MISTAKE_DELAY = 300 -- ms
+Game.COUNTDOWN_DELAY = 3000 -- ms
 
 ---@return StratHero.Game
 function Game.new()
-	local self = {}
+	local self = setmetatable({}, { __index = Game })
 
 	self.state = "ready"
 	self.stratagems = Stratagems.list({})
+
 	self.ui = Ui.new()
-	self.timer = Timer.new(16, function()
+	for key, motion in pairs(motion_keys) do
+		self.ui:map(key, function()
+			self:on_key(motion)
+		end)
+	end
+	self.ui:on("BufLeave", function()
+		self:stop()
+		self.ui:unmount()
+	end)
+
+	self.timer = Timer.new(self.TICKRATE, function()
 		self:tick()
 	end)
 
-	return setmetatable(self, { __index = Game })
+	return self
 end
 
 function Game:tick()
-	self.elapsed = vim.uv.hrtime() - self.started
+	self.elapsed = vim.uv.hrtime() - (self.real_start or 0) -- self.started
 	self.ui:draw(self)
 
 	-- if self.elapsed > Game.LENGTH then
@@ -67,6 +83,10 @@ function Game:tick()
 end
 
 function Game:on_key(motion)
+	if not self.started then
+		self:start()
+		return
+	end
 	local expected = self.current.sequence[self.entered + 1]
 
 	if expected ~= motion then
@@ -100,7 +120,7 @@ function Game:success()
 		self.current = self:pick_stratagem()
 		self.entered = 0
 		-- self.timer:start()
-	end, 150)
+	end, self.SUCCESS_DELAY)
 end
 
 function Game:fail()
@@ -108,7 +128,15 @@ function Game:fail()
 	self.did_fail = true
 	vim.defer_fn(function()
 		self.did_fail = false
-	end, 300)
+	end, self.MISTAKE_DELAY)
+end
+
+function Game:show()
+	-- self.started = vim.uv.hrtime()
+	-- self.real_start = self.started + (self.COUNTDOWN_DELAY * 1e6)
+	-- self.elapsed = 0
+	self.ui:mount()
+	self.timer:start()
 end
 
 function Game:start()
@@ -126,20 +154,16 @@ function Game:start()
 	self.current = self:pick_stratagem()
 
 	self.started = vim.uv.hrtime()
+	self.real_start = self.started + (self.COUNTDOWN_DELAY * 1e6)
 	self.elapsed = 0
 
-	for key, motion in pairs(motion_keys) do
-		self.ui:map(key, function()
-			self:on_key(motion)
-		end)
-	end
-	self.ui:on("BufLeave", function()
-		self:stop()
-		self.ui:unmount()
-	end)
-	self.ui:mount()
+	self:show()
 
-	self.timer:start()
+	self.state = "starting"
+
+	vim.defer_fn(function()
+		self.state = "playing"
+	end, self.COUNTDOWN_DELAY)
 end
 
 function Game:stop()

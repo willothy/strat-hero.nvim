@@ -18,8 +18,9 @@ function M.setup()
 			end
 		end)
 		local game = Game.new()
+		game:show()
 
-		game:start()
+		-- game:start()
 
 		_G.game = game
 	end, {

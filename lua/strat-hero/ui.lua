@@ -97,6 +97,7 @@ function Ui:mount()
 		title_pos = "left",
 		footer = "",
 		footer_pos = "left",
+		zindex = 51,
 	})
 end
 
@@ -124,7 +125,7 @@ function Ui:draw(game)
 		return
 	end
 
-	local percent_remaining = 1 - (game.elapsed / 5e9)
+	local percent_remaining = 1 - (math.max(0, game.elapsed - game.COUNTDOWN_DELAY) / game.LENGTH)
 
 	local raw_width = percent_remaining * 40
 	local bar_width = math.floor(raw_width)
@@ -139,52 +140,82 @@ function Ui:draw(game)
 
 	local config = vim.api.nvim_win_get_config(self.win)
 
-	config.title = string.format("Score: %d, Level: %d, Time: %dms", game.score, game.level, game.elapsed / 1e6)
-	config.footer = progress_bar
-
-	vim.api.nvim_win_set_config(self.win, config)
-
 	local Line = require("nui.line")
 	local Text = require("nui.text")
 
-	local sequence = Line()
+	local title = "Strategem Hero"
+	config.title = string.rep(" ", 20 - math.floor((#title / 2) + 0.5)) .. title
 
-	local stratagem = game.current
-	local entered = game.entered
-	local did_fail = game.did_fail
+	local lines
+	if game.state == "starting" then
+		config.footer = progress_blocks[8]:rep(40)
 
-	for i, motion in ipairs(stratagem.sequence) do
-		local hl
-		if did_fail then
-			hl = "DiagnosticError"
-		else
-			if i < (entered + 1) then
-				hl = "DiagnosticOk"
+		local countdown = (game.COUNTDOWN_DELAY - game.elapsed) / 1e9
+		lines = {
+			Line(),
+			Line({ Text("Get ready!", "Title") }),
+			Line(),
+			Line({ Text(("Starting in %.1fs"):format(countdown), "Comment") }),
+			Line(),
+		}
+	elseif game.state == "playing" then
+		config.title = string.format("Score: %d, Level: %d, Time: %dms", game.score, game.level, game.elapsed / 1e6)
+		config.footer = progress_bar
+
+		local sequence = Line()
+
+		local stratagem = game.current
+		local entered = game.entered
+		local did_fail = game.did_fail
+
+		for i, motion in ipairs(stratagem.sequence) do
+			local hl
+			if did_fail then
+				hl = "DiagnosticError"
 			else
-				hl = "Comment"
+				if i < (entered + 1) then
+					hl = "DiagnosticOk"
+				else
+					hl = "Comment"
+				end
 			end
+			sequence:append(string.format(" %s ", arrows[motion]), hl)
 		end
-		sequence:append(string.format(" %s ", arrows[motion]), hl)
-	end
 
-	local lines = {
-		Line(),
-		Line({ Text(stratagem.name, "Title") }),
-		Line(),
-		sequence,
-	}
+		lines = {
+			Line(),
+			Line({ Text(stratagem.name, "Title") }),
+			Line(),
+			sequence,
+		}
+	elseif game.state == "over" then
+		-- TODO
+	elseif game.state == "ready" then
+		config.footer = progress_blocks[8]:rep(40)
+		lines = {
+			Line(),
+			Line(),
+			Line({ Text("Press a move key to start", "Title") }),
+			Line(),
+			Line(),
+		}
+	end
 
 	local buf = self:get_buf()
 
-	for i, line in ipairs(lines) do
-		local width = line:width()
-		if width <= 40 then
-			local texts = line._texts
-			table.insert(texts, 1, Text(string.rep(" ", math.floor((40 - width) / 2))))
-			line = Line(texts)
+	if lines then
+		for i, line in ipairs(lines) do
+			local width = line:width()
+			if width <= 40 then
+				local texts = line._texts
+				table.insert(texts, 1, Text(string.rep(" ", math.floor((40 - width) / 2))))
+				line = Line(texts)
+			end
+			line:render(buf, self.ns, i)
 		end
-		line:render(buf, self.ns, i)
 	end
+
+	vim.api.nvim_win_set_config(self.win, config)
 end
 
 function Ui:unmount()
