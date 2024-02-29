@@ -1,10 +1,10 @@
 local M = {}
 
 -- TODO:
--- 1. Create a command to start the game
--- 2. Manage the game progress with a timer
--- 3. Create buffer-local mappings or use `vim.on_key` to play the game
--- 4. UI window with nice appearance
+-- 1. Start game with filters
+-- 2. More advanced filters
+-- 3. Finish UI
+-- 4. Sequential game levels with increasing difficulty
 -- 5. Subcommands / bang to stop / restart the game
 
 function M.setup()
@@ -35,6 +35,5 @@ for k in pairs(package.loaded) do
 end
 vim.opt.rtp:prepend(vim.uv.cwd())
 M.setup()
-vim.cmd.StratHero()
 
 return M
