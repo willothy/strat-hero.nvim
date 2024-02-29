@@ -61,11 +61,6 @@ function Ui:draw(game)
 		return
 	end
 
-	local time_remaining = 5000 - (game.elapsed / 5e6)
-	if time_remaining < 0 then
-		time_remaining = 0
-	end
-
 	local percent_remaining = 1 - (game.elapsed / 5e9)
 
 	local raw_width = percent_remaining * 40

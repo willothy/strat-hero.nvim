@@ -30,6 +30,7 @@ local motion_keys = {
 function M.setup()
 	local Game = require("strat-hero.game")
 	vim.api.nvim_create_user_command("StratHero", function()
+		-- NOTE: just for debugging
 		pcall(function()
 			if _G.game then
 				_G.game:stop()
