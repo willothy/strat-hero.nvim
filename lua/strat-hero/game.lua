@@ -87,6 +87,9 @@ function Game:on_key(motion)
 		self:start()
 		return
 	end
+	if self.did_fail then
+		self.did_fail = false
+	end
 	local expected = self.current.sequence[self.entered + 1]
 
 	if expected ~= motion then
