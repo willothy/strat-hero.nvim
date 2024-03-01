@@ -106,7 +106,7 @@ function Game:pick_stratagem()
 	local rand = math.random(#self.stratagems)
 	local strat = self.stratagems[rand]
 	-- lazy way to avoid the same stratagem twice in a row
-	while strat == self.current do
+	while #self.stratagems > 1 and strat == self.current do
 		rand = math.random(#self.stratagems)
 		strat = self.stratagems[rand]
 	end
