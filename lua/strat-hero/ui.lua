@@ -109,40 +109,40 @@ function Ui:draw(game)
 		return
 	end
 
-	local config = vim.api.nvim_win_get_config(self.win)
-
-	local Line = require("nui.line")
-	local Text = require("nui.text")
+	local win_config = vim.api.nvim_win_get_config(self.win)
 
 	local title = "Strategem Hero"
-	config.title = string.rep(" ", 20 - math.floor((#title / 2) + 0.5)) .. title
+	win_config.title = string.rep(" ", 20 - math.floor((#title / 2) + 0.5)) .. title
 
-	local lines
-	if game.state == "starting" then
-		lines = require("strat-hero.view.countdown").render(game, config)
-	elseif game.state == "playing" then
-		lines = require("strat-hero.view.gameview").render(game, config)
-	elseif game.state == "over" then
-		lines = require("strat-hero.view.gameover").render(game, config)
-	elseif game.state == "ready" then
-		lines = require("strat-hero.view.splash").render(game, config)
-	end
+	-- This is ugly but I want the names to make sense
+	local view_name = ({
+		ready = "splash",
+		starting = "countdown",
+		playing = "gameview",
+		over = "gameover",
+	})[game.state]
+	---@type StratHero.Ui.View
+	local view = require("strat-hero.view." .. view_name)
 
 	local buf = self:get_buf()
 
-	if lines then
-		for i, line in ipairs(lines) do
+	local Text = require("nui.text")
+
+	vim.iter(view.render(game, win_config))
+		:map(function(line)
 			local width = line:width()
-			if width <= config.width then
+			if width <= win_config.width then
 				local texts = line._texts
 				table.insert(texts, 1, Text(string.rep(" ", math.floor((40 - width) / 2))))
-				line = Line(texts)
 			end
+			return line
+		end)
+		:enumerate()
+		:each(function(i, line)
 			line:render(buf, self.ns, i)
-		end
-	end
+		end)
 
-	vim.api.nvim_win_set_config(self.win, config)
+	vim.api.nvim_win_set_config(self.win, win_config)
 end
 
 function Ui:unmount()
