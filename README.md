@@ -1,4 +1,3 @@
-
 <h1 align='center'>
   strat-hero.nvim
 </h1>
@@ -15,5 +14,6 @@ but the core mechanics and some UI are implemented.
 
 Current UI demo (again, WIP):
 
-https://github.com/willothy/strat-hero.nvim/assets/38540736/ea17a50d-2e50-4a7f-b18d-b15efb81188d
+https://github.com/willothy/strat-hero.nvim/assets/38540736/57d896db-7242-4fd8-b557-24ab40cc133d
+
 
