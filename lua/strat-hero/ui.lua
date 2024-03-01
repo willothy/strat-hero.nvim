@@ -172,9 +172,6 @@ function Ui:draw(game)
 	local Text = require("nui.text")
 
 	-- win_config may be mutated by the view.render function
-	--
-	-- FIXME: Remove after neovim/neovim#27695 is merged
-	---@diagnostic disable-next-line: param-type-mismatch
 	vim.iter(view.render(game, win_config))
 		:map(function(line)
 			local width = line:width()
