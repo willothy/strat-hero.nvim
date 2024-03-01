@@ -21,9 +21,7 @@ local Ui = {}
 ---Creates a new Ui instance.
 ---@return StratHero.Ui
 function Ui.new()
-	local self = setmetatable({}, { __index = Ui })
-
-	return self
+	return setmetatable({}, { __index = Ui })
 end
 
 ---Gets a handle to the Ui buffer, creating one if it doesn't exist.
