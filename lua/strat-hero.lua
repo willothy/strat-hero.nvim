@@ -4,8 +4,9 @@ local M = {}
 -- 1. Start game with filters
 -- 2. More advanced filters
 -- 3. Finish UI
--- 4. Sequential game levels with increasing difficulty
+-- 4. Sequential game round with increasing difficulty
 -- 5. Subcommands / bang to stop / restart the game
+-- 6. Mode-specific games (limit to wasd, hjkl, etc.)
 
 function M.setup()
 	local Game = require("strat-hero.game")
@@ -27,6 +28,7 @@ function M.setup()
 	})
 end
 
+---FIXME: remove this once development is "done"
 for k in pairs(package.loaded) do
 	if k:match("^strat%-hero") then
 		package.loaded[k] = nil

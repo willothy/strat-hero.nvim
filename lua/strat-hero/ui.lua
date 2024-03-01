@@ -1,3 +1,8 @@
+---View interface for drawing to the UI. A view takes the current game state and
+---the window config of the UI, and returns a list of Nui lines to render.
+---
+---The view should mutate the win_config as needed to make any updates; the Ui
+---will call `vim.api.nvim_win_set_config` with the updated config automatically.
 ---@class StratHero.Ui.View
 ---@field render fun(game: StratHero.Game, win_config: vim.api.keyset.win_config): NuiLine[]
 
@@ -5,10 +10,15 @@
 ---The UI is managed by the Game object, and is *only* responsible for drawing its current
 ---state and handling window/buffer logic. It should have no knowledge of the game's internals.
 ---@class StratHero.Ui
+---Window opened by the Ui, if it is shown.
 ---@field win integer?
+---Buffer currently owned by the Ui, if any.
 ---@field buf integer?
+---Namespace for the Ui buffer.
+---@field ns integer
 local Ui = {}
 
+---Creates a new Ui instance.
 ---@return StratHero.Ui
 function Ui.new()
 	local self = setmetatable({}, { __index = Ui })
@@ -16,6 +26,10 @@ function Ui.new()
 	return self
 end
 
+---Gets a handle to the Ui buffer, creating one if it doesn't exist.
+---Since autocmds and mappings for the Ui need to be buffer-local, it is
+---important that all operations happen on the same buffer.
+---@return integer
 function Ui:get_buf()
 	if self.buf and vim.api.nvim_buf_is_valid(self.buf) then
 		return self.buf
@@ -36,6 +50,17 @@ function Ui:get_buf()
 	return self.buf
 end
 
+---@class StratHero.Ui.EventOpts
+---@field user boolean? Whether to use the User autocmd event.
+---@field buffer boolean? Whether to use the buffer-local autocmd event.
+
+---Registers an autocmd for the Ui.
+---@param event string
+---Callback to be invoked by the autocmd. The callback should return true if the
+---autocmd should be removed after being invoked.
+---@param callback fun(args: table): boolean?
+---@param opts StratHero.Ui.EventOpts?
+---@return integer autocmd The autocmd id
 function Ui:on(event, callback, opts)
 	opts = opts or {}
 	local pattern, buffer
@@ -46,17 +71,26 @@ function Ui:on(event, callback, opts)
 	if opts.buffer ~= false then
 		buffer = self:get_buf()
 	end
-	vim.api.nvim_create_autocmd(event, {
+	local id
+	id = vim.api.nvim_create_autocmd(event, {
 		pattern = pattern,
-		callback = callback,
+		callback = function(args)
+			if callback(args) then
+				self:off(id)
+			end
+		end,
 		buffer = buffer,
 	})
+	return id
 end
 
+---Removes an autocmd registered to the Ui, given its id.
+---@param event_id integer The autocmd id returned by `Ui:on`
 function Ui:off(event_id)
 	vim.api.nvim_del_autocmd(event_id)
 end
 
+---Shows the Ui window.
 function Ui:mount()
 	if self.win and vim.api.nvim_win_is_valid(self.win) then
 		return
@@ -85,9 +119,17 @@ function Ui:mount()
 	})
 end
 
+---@class StratHero.Ui.KeymapOpts
+---@field mode string? The mode to map the key in. Default: "n"
+---@field expr boolean? Whether to use an expression mapping.
+
+---Creates a buffer-local mapping for the Ui.
+---@param key string
+---@param action fun() | string
+---@param opts StratHero.Ui.KeymapOpts?
 function Ui:map(key, action, opts)
-	local buf = self:get_buf()
 	opts = opts or {}
+	local buf = self:get_buf()
 
 	local mode = opts.mode or "n"
 	opts.mode = nil
@@ -98,6 +140,8 @@ function Ui:map(key, action, opts)
 		action,
 		vim.tbl_deep_extend("force", opts, {
 			buffer = buf,
+			noremap = true,
+			expr = opts.expr,
 		})
 	)
 end
@@ -119,6 +163,7 @@ function Ui:draw(game)
 		ready = "splash",
 		starting = "countdown",
 		playing = "gameview",
+		failed = "gameview",
 		over = "gameover",
 	})[game.state]
 	---@type StratHero.Ui.View
@@ -149,9 +194,18 @@ function Ui:draw(game)
 	vim.api.nvim_win_set_config(self.win, win_config)
 end
 
+---Closes the Ui window.
 function Ui:unmount()
 	if self.win and vim.api.nvim_win_is_valid(self.win) then
 		vim.api.nvim_win_close(self.win, true)
+	end
+end
+
+---Closes the game window, and deletes the buffer.
+function Ui:destroy()
+	self:unmount()
+	if self.buf and vim.api.nvim_buf_is_valid(self.buf) then
+		vim.api.nvim_buf_delete(self.buf, { force = true })
 	end
 end
 

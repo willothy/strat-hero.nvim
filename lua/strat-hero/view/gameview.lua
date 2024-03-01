@@ -1,3 +1,4 @@
+---The main game view, responsible for rendering the "playing" and "failed" states
 ---@class StratHero.Ui.GameView: StratHero.Ui.View
 local GameView = {}
 
@@ -8,8 +9,8 @@ function GameView.render(game, config)
 	config.title = string.format(
 		"SCORE %d%sROUND %d",
 		game.score,
-		string.rep(" ", 40 - (#("score " .. game.score) + #("round " .. game.level))),
-		game.level
+		string.rep(" ", 40 - (#("score " .. game.score) + #("round " .. game.round))),
+		game.round
 	)
 
 	local percent_remaining = 1 - (math.max(0, game.elapsed - game.COUNTDOWN_DELAY) / game.LENGTH)
@@ -34,7 +35,7 @@ function GameView.render(game, config)
 
 	local stratagem = game.current
 	local entered = game.entered
-	local did_fail = game.did_fail
+	local did_fail = game.state == game.STATE.FAILED
 
 	for i, motion in ipairs(stratagem.sequence) do
 		local hl

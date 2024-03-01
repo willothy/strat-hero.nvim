@@ -1,3 +1,4 @@
+---The countdown view for starting the game.
 ---@class StratHero.Ui.Countdown: StratHero.Ui.View
 local Countdown = {}
 

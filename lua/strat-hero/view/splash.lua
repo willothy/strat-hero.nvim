@@ -1,3 +1,4 @@
+---The splash view for when the UI is first opened.
 ---@class StratHero.Ui.Splash: StratHero.Ui.View
 local Splash = {}
 

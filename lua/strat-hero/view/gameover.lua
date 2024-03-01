@@ -1,3 +1,4 @@
+---Game over screen.
 ---@class StratHero.Ui.Gameover: StratHero.Ui.View
 local Gameover = {}
 
