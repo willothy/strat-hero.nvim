@@ -129,7 +129,7 @@ Game.COUNTDOWN_DELAY = 3000
 function Game.new()
 	local self = setmetatable({}, { __index = Game })
 
-	self.state = "ready"
+	self.state = State.READY
 	self.stratagems = Stratagems.list({})
 
 	self.ui = Ui.new()
@@ -247,10 +247,10 @@ function Game:start()
 
 	self:show()
 
-	self.state = "starting"
+	self.state = State.STARTING
 
 	vim.defer_fn(function()
-		self.state = "playing"
+		self.state = State.PLAYING
 	end, self.COUNTDOWN_DELAY)
 end
 
@@ -259,7 +259,7 @@ end
 ---This does *not* close the game UI.
 function Game:stop()
 	self.timer:stop()
-	self.state = "over"
+	self.state = State.OVER
 	self.ui:draw(self)
 	if timeout ~= nil then
 		vim.o.timeoutlen = timeout
