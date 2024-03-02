@@ -107,10 +107,16 @@ Game.MOTIONS = Motions
 
 ---Configuration (probably shouldn't be changed though)
 
----The base length of a game round in nanoseconds.
+---The base length of a game round in milliseconds.
 ---TODO: this should be dynamic and actually used as the base value
 ---@type integer
-Game.LENGTH = 5e9
+Game.LENGTH = 10000
+---Bonus time for a successful sequence, in milliseconds.
+---@type integer
+Game.SUCCESS_BONUS = 500
+---Number of points awarded for a successful sequence.
+---@type integer
+Game.SUCCESS_POINTS = 1
 ---The UI tickrate in milliseconds.
 ---@type integer
 Game.TICKRATE = 16
@@ -199,6 +205,7 @@ end
 
 ---Triggers a success event, when the player correctly enters a full sequence.
 function Game:success()
+	self.score = self.score + 1
 	vim.defer_fn(function()
 		self.current = self:pick_stratagem()
 		self.entered = 0

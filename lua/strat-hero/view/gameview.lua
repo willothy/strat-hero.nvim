@@ -13,7 +13,7 @@ function GameView.render(game, config)
 		game.round
 	)
 
-	local percent_remaining = 1 - (math.max(0, game.elapsed - game.COUNTDOWN_DELAY) / game.LENGTH)
+	local percent_remaining = 1 - (math.max(0, (game.elapsed - game.COUNTDOWN_DELAY) / 1e6) / game.LENGTH)
 
 	local raw_width = percent_remaining * 40
 	local bar_width = math.floor(raw_width)
