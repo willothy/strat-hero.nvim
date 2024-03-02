@@ -28,13 +28,4 @@ function M.setup()
 	})
 end
 
----FIXME: remove this once development is "done"
-for k in pairs(package.loaded) do
-	if k:match("^strat%-hero") then
-		package.loaded[k] = nil
-	end
-end
-vim.opt.rtp:prepend(vim.uv.cwd())
-M.setup()
-
 return M
