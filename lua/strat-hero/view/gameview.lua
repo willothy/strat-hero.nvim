@@ -1,19 +1,21 @@
 ---The main game view, responsible for rendering the "playing" and "failed" states
 ---@class StratHero.Ui.GameView: StratHero.Ui.View
+
+---@type StratHero.Ui.GameView
 local GameView = {}
 
-function GameView.render(game, config)
+function GameView.render(game, win_config)
 	local Line = require("nui.line")
 	local Text = require("nui.text")
 
-	config.title = string.format(
+	win_config.title = string.format(
 		"SCORE %d%sROUND %d",
 		game.score,
 		string.rep(" ", 40 - (#("score " .. game.score) + #("round " .. game.round))),
 		game.round
 	)
 
-	local percent_remaining = 1 - (math.max(0, (game.elapsed - game.COUNTDOWN_DELAY) / 1e6) / game.LENGTH)
+	local percent_remaining = 1 - (math.max(0, (game.elapsed - game.COUNTDOWN_DELAY) / 1e6) / game.TIME_LIMIT)
 
 	local raw_width = percent_remaining * 40
 	local bar_width = math.floor(raw_width)
@@ -29,7 +31,7 @@ function GameView.render(game, config)
 	end
 
 	local progress_bar = progress_blocks[8]:rep(bar_width) .. block
-	config.footer = progress_bar
+	win_config.footer = progress_bar
 
 	local sequence = Line()
 

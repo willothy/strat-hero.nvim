@@ -1,5 +1,7 @@
 ---The splash view for when the UI is first opened.
 ---@class StratHero.Ui.Splash: StratHero.Ui.View
+
+---@type StratHero.Ui.Splash
 local Splash = {}
 
 function Splash.render(_game, config)

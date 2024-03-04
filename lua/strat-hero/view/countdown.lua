@@ -1,5 +1,7 @@
 ---The countdown view for starting the game.
 ---@class StratHero.Ui.Countdown: StratHero.Ui.View
+
+---@type StratHero.Ui.Countdown
 local Countdown = {}
 
 function Countdown.render(game, win_config)

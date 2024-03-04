@@ -4,7 +4,10 @@
 ---The view should mutate the win_config as needed to make any updates; the Ui
 ---will call `vim.api.nvim_win_set_config` with the updated config automatically.
 ---@class StratHero.Ui.View
----@field render fun(game: StratHero.Game, win_config: vim.api.keyset.win_config): NuiLine[]
+---Renders the view into NuiLines, and optionally mutates the window config.
+---Return nil to not redraw the view. The win_config will only be updated if it's
+---changed.
+---@field render fun(game: StratHero.Game, win_config: vim.api.keyset.win_config): NuiLine[]?
 
 ---The UI for the game.
 ---The UI is managed by the Game object, and is *only* responsible for drawing its current
@@ -17,6 +20,15 @@
 ---Namespace for the Ui buffer.
 ---@field ns integer
 local Ui = {}
+
+---@type table<StratHero.State, string>
+local views = {
+	ready = "splash",
+	starting = "countdown",
+	playing = "gameview",
+	failed = "gameview",
+	over = "gameover",
+}
 
 ---Creates a new Ui instance.
 ---@return StratHero.Ui
@@ -156,37 +168,42 @@ function Ui:draw(game)
 	local title = "Strategem Hero"
 	win_config.title = string.rep(" ", 20 - math.floor((#title / 2) + 0.5)) .. title
 
-	-- This is ugly but I want the names to make sense
-	local view_name = ({
-		ready = "splash",
-		starting = "countdown",
-		playing = "gameview",
-		failed = "gameview",
-		over = "gameover",
-	})[game.state]
-	---@type StratHero.Ui.View
-	local view = require("strat-hero.view." .. view_name)
-
+	local view = require("strat-hero.view." .. views[game.state]) ---@type StratHero.Ui.View
 	local buf = self:get_buf()
 
 	local Text = require("nui.text")
 
-	-- win_config may be mutated by the view.render function
-	vim.iter(view.render(game, win_config))
-		:map(function(line)
-			local width = line:width()
-			if width <= win_config.width then
-				local texts = line._texts
-				table.insert(texts, 1, Text(string.rep(" ", math.floor((40 - width) / 2))))
-			end
-			return line
-		end)
-		:enumerate()
-		:each(function(i, line)
-			line:render(buf, self.ns, i)
-		end)
+	---TODO: Benchmark this. Is it beneficial to (maybe) not make native calls as often?
+	local win_config_dirty = false
+	local win_config_mutator = setmetatable({}, {
+		__index = win_config,
+		__newindex = function(_, k, v)
+			win_config_dirty = true
+			rawset(win_config, k, v)
+		end,
+	})
 
-	vim.api.nvim_win_set_config(self.win, win_config)
+	local lines = view.render(game, win_config_mutator)
+
+	if lines then
+		vim.iter(lines)
+			:map(function(line)
+				local width = line:width()
+				if width <= win_config.width then
+					local texts = line._texts
+					table.insert(texts, 1, Text(string.rep(" ", math.floor((40 - width) / 2))))
+				end
+				return line
+			end)
+			:enumerate()
+			:each(function(i, line)
+				line:render(buf, self.ns, i)
+			end)
+	end
+
+	if win_config_dirty then
+		vim.api.nvim_win_set_config(self.win, win_config)
+	end
 end
 
 ---Closes the Ui window.
