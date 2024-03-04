@@ -1,6 +1,8 @@
 local M = {}
 
 -- TODO:
+-- 0. Rework game loop to be pausable so rounds can be implemented
+--    - Need to separate the game countdown timer from the redraw / game loop timer.
 -- 1. Start game with filters
 -- 2. More advanced filters
 -- 3. Finish UI

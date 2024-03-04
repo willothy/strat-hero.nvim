@@ -99,27 +99,45 @@ local Game = {}
 
 ---Constants
 
----Mapping of game states to ease development. Do not mutate.
+---Mapping of game states to ease development.
 Game.STATE = State
 
----Mapping of Vim pseudokeys to game motions. Do not mutate.
+---Mapping of Vim pseudokeys to game motions.
 Game.MOTIONS = Motions
+
+---TODO:
+--- - A new state for the end of a round, with a delay before the next round starts
+--- - Speed bonus at the end of round = percentage of time remaining
+--- - Bonus points for perfect round = 100
 
 ---Configuration (probably shouldn't be changed though)
 
----The base length of a game round in milliseconds.
----TODO: this should be dynamic and actually used as the base value
+---NOTE: These values may not be perfectly accurate to what is in Helldivers 2.
+---I found these values by trial and error / playing the game. I timed the sequences,
+---and counted the points per sequence, bonuses at the end of rounds, and round length.
+---I will update them as needed to make the game more consistent with the reference
+---version, though these values should be pretty close.
+
+---The time limit of a game round in milliseconds.
 ---@type integer
-Game.LENGTH = 10000
+Game.TIME_LIMIT = 10000
+---The base number of stratagems to show in a round.
+---The actual number is `BASE_LENGTH + round` (round starts at 1).
+---@type integer
+Game.BASE_LENGTH = 5
 ---Bonus time for a successful sequence, in milliseconds.
 ---@type integer
-Game.SUCCESS_BONUS = 500
----Number of points awarded for a successful sequence.
+Game.SUCCESS_TIME_BONUS = 500
+---Number of points awarded for *each motion* of a successful sequence.
 ---@type integer
-Game.SUCCESS_POINTS = 1
+Game.SUCCESS_POINTS = 5
+
+---NOTE: These values are more arbitrary and can be changed to suit the game's feel.
+---      Unrelated to the reference game.
+
 ---The UI tickrate in milliseconds.
 ---@type integer
-Game.TICKRATE = 16
+Game.TICKRATE = 25 -- 40 fps is maybe a bit much?
 ---The delay in milliseconds before the next stratagem is shown / the next round starts.
 ---@type integer
 Game.SUCCESS_DELAY = 150
@@ -205,7 +223,7 @@ end
 
 ---Triggers a success event, when the player correctly enters a full sequence.
 function Game:success()
-	self.score = self.score + 1
+	self.score = self.score + (self.SUCCESS_POINTS * #self.current.sequence)
 	vim.defer_fn(function()
 		self.current = self:pick_stratagem()
 		self.entered = 0
