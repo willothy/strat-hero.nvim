@@ -15,33 +15,33 @@ local timeout
 ---Mapping of Vim pseudokeys to game motions.
 ---@type table<StratHero.PseudoKey, StratHero.Motion>
 local Motions = {
-	-- Vim mode
-	k = "Up",
-	j = "Down",
-	h = "Left",
-	l = "Right",
+  -- Vim mode
+  k = "Up",
+  j = "Down",
+  h = "Left",
+  l = "Right",
 
-	-- Helldivers mode
-	w = "Up",
-	s = "Down",
-	a = "Left",
-	d = "Right",
+  -- Helldivers mode
+  w = "Up",
+  s = "Down",
+  a = "Left",
+  d = "Right",
 
-	-- Skill issue mode (arrow keys)
-	["<Up>"] = "Up",
-	["<Down>"] = "Down",
-	["<Left>"] = "Left",
-	["<Right>"] = "Right",
+  -- Skill issue mode (arrow keys)
+  ["<Up>"] = "Up",
+  ["<Down>"] = "Down",
+  ["<Left>"] = "Left",
+  ["<Right>"] = "Right",
 }
 
 ---Reference to the state names to ease development. Do not mutate this.
 ---@type table<string, StratHero.State>
 local State = {
-	READY = "ready",
-	STARTING = "starting",
-	PLAYING = "playing",
-	FAILED = "failed",
-	OVER = "over",
+  READY = "ready",
+  STARTING = "starting",
+  PLAYING = "playing",
+  FAILED = "failed",
+  OVER = "over",
 }
 
 ---@alias StratHero.State "ready" | "starting" | "playing" | "failed" | "over"
@@ -152,166 +152,166 @@ Game.COUNTDOWN_DELAY = 3000
 ---Creates a new game instance, sets up the UI and input handling, and returns it.
 ---@return StratHero.Game
 function Game.new()
-	local self = setmetatable({}, { __index = Game })
+  local self = setmetatable({}, { __index = Game })
 
-	self.state = State.READY
-	self.started = false
+  self.state = State.READY
+  self.started = false
 
-	self.stratagems = Stratagems.list({})
+  self.stratagems = Stratagems.list({})
 
-	self.ui = Ui.new()
-	for key, motion in pairs(Motions) do
-		self.ui:map(key, function()
-			self:on_key(motion)
-		end)
-	end
-	self.ui:on("BufLeave", function()
-		self:stop()
-		self.ui:unmount()
-	end)
+  self.ui = Ui.new()
+  for key, motion in pairs(Motions) do
+    self.ui:map(key, function()
+      self:on_key(motion)
+    end)
+  end
+  self.ui:on("BufLeave", function()
+    self:stop()
+    self.ui:unmount()
+  end)
 
-	self.timer = Timer.new(self.TICKRATE, function()
-		self:tick()
-	end)
+  self.timer = Timer.new(self.TICKRATE, function()
+    self:tick()
+  end)
 
-	return self
+  return self
 end
 
 ---Steps the game forward by one tick, updating the UI and checking for win/lose conditions.
 function Game:tick()
-	local time = vim.uv.hrtime()
-	local delta = time - self.last_tick
-	self.remaining = self.remaining - delta
-	self.last_tick = time
+  local time = vim.uv.hrtime()
+  local delta = time - self.last_tick
+  self.remaining = self.remaining - delta
+  self.last_tick = time
 
-	self.ui:draw(self)
+  self.ui:draw(self)
 
-	if self.remaining <= 0 then
-		if self.state == State.PLAYING then
-			self:stop()
-		elseif self.state == State.STARTING then
-			self.remaining = self.TIME_LIMIT * 1e6
-			self.state = State.PLAYING
-		end
-	end
+  if self.remaining <= 0 then
+    if self.state == State.PLAYING then
+      self:stop()
+    elseif self.state == State.STARTING then
+      self.remaining = self.TIME_LIMIT * 1e6
+      self.state = State.PLAYING
+    end
+  end
 end
 
 ---Handles a motion event, checking if it is the correct input for the current sequence.
 ---@param motion StratHero.Motion
 function Game:on_key(motion)
-	if not self.started then
-		self:start()
-		return
-	end
-	if self.state == State.FAILED then
-		self.state = State.PLAYING
-	end
-	local expected = self.current.sequence[self.entered + 1]
+  if not self.started then
+    self:start()
+    return
+  end
+  if self.state == State.FAILED then
+    self.state = State.PLAYING
+  end
+  local expected = self.current.sequence[self.entered + 1]
 
-	if expected ~= motion then
-		self:fail()
-		return
-	end
-	self.entered = self.entered + 1
-	if self.entered == #self.current.sequence then
-		self:success()
-	end
+  if expected ~= motion then
+    self:fail()
+    return
+  end
+  self.entered = self.entered + 1
+  if self.entered == #self.current.sequence then
+    self:success()
+  end
 end
 
 ---Picks a stratagem from the list, and attempts to avoid
 ---using the same stratagem twice in a row.
 ---@return StratHero.Stratagem
 function Game:pick_stratagem()
-	local rand = math.random(#self.stratagems)
-	local strat = self.stratagems[rand]
-	-- lazy way to avoid the same stratagem twice in a row
-	while #self.stratagems > 1 and strat == self.current do
-		rand = math.random(#self.stratagems)
-		strat = self.stratagems[rand]
-	end
+  local rand = math.random(#self.stratagems)
+  local strat = self.stratagems[rand]
+  -- lazy way to avoid the same stratagem twice in a row
+  while #self.stratagems > 1 and strat == self.current do
+    rand = math.random(#self.stratagems)
+    strat = self.stratagems[rand]
+  end
 
-	return strat
+  return strat
 end
 
 ---Triggers a success event, when the player correctly enters a full sequence.
 function Game:success()
-	self.score = self.score + (self.SUCCESS_POINTS * #self.current.sequence)
-	self.successes = self.successes + 1
-	self.remaining = self.remaining + (self.SUCCESS_TIME_BONUS * 1e6)
+  self.score = self.score + (self.SUCCESS_POINTS * #self.current.sequence)
+  self.successes = self.successes + 1
+  self.remaining = self.remaining + (self.SUCCESS_TIME_BONUS * 1e6)
 
-	if self.successes >= self.BASE_LENGTH + self.round then
-		self.round = self.round + 1
-		self.successes = 0
-		self.stratagems = Stratagems.list({})
-		self.remaining = self.COUNTDOWN_DELAY * 1e6
-		self.current = self:pick_stratagem()
-		self.entered = 0
-		self.state = State.STARTING
-	else
-		vim.defer_fn(function()
-			self.current = self:pick_stratagem()
-			self.entered = 0
-		end, self.SUCCESS_DELAY)
-	end
+  if self.successes >= self.BASE_LENGTH + self.round then
+    self.round = self.round + 1
+    self.successes = 0
+    self.stratagems = Stratagems.list({})
+    self.remaining = self.COUNTDOWN_DELAY * 1e6
+    self.current = self:pick_stratagem()
+    self.entered = 0
+    self.state = State.STARTING
+  else
+    vim.defer_fn(function()
+      self.current = self:pick_stratagem()
+      self.entered = 0
+    end, self.SUCCESS_DELAY)
+  end
 end
 
 ---Triggers a failure event, when the player enters an incorrect motion.
 function Game:fail()
-	self.entered = 0
-	self.state = State.FAILED
-	vim.defer_fn(function()
-		if self.state == State.FAILED then
-			self.state = State.PLAYING
-		end
-	end, self.MISTAKE_DELAY)
+  self.entered = 0
+  self.state = State.FAILED
+  vim.defer_fn(function()
+    if self.state == State.FAILED then
+      self.state = State.PLAYING
+    end
+  end, self.MISTAKE_DELAY)
 end
 
 ---Shows the game UI, but doesn't start the game.
 function Game:show()
-	self.ui:mount()
-	self.ui:draw(self)
+  self.ui:mount()
+  self.ui:draw(self)
 end
 
 ---Starts the game countdown, and then the game itself.
 ---Shows the game UI if it hasn't been shown yet.
 function Game:start()
-	if self.started and self.state ~= "over" then
-		return
-	end
-	if timeout == nil then
-		timeout = vim.o.timeoutlen
-	end
-	vim.o.timeoutlen = 0
+  if self.started and self.state ~= "over" then
+    return
+  end
+  if timeout == nil then
+    timeout = vim.o.timeoutlen
+  end
+  vim.o.timeoutlen = 0
 
-	self.score = 0
-	self.round = 1
-	self.entered = 0
-	self.successes = 0
+  self.score = 0
+  self.round = 1
+  self.entered = 0
+  self.successes = 0
 
-	self.current = self:pick_stratagem()
+  self.current = self:pick_stratagem()
 
-	self.started = true
+  self.started = true
 
-	self.last_tick = vim.uv.hrtime()
-	self.timer:start()
+  self.last_tick = vim.uv.hrtime()
+  self.timer:start()
 
-	self.remaining = self.COUNTDOWN_DELAY * 1e6
-	self.state = State.STARTING
+  self.remaining = self.COUNTDOWN_DELAY * 1e6
+  self.state = State.STARTING
 
-	self:show()
+  self:show()
 end
 
 ---Stops the game, and triggers the display of the game over UI.
 ---
 ---This does *not* close the game UI.
 function Game:stop()
-	self.timer:stop()
-	self.state = State.OVER
-	self.ui:draw(self)
-	if timeout ~= nil then
-		vim.o.timeoutlen = timeout
-	end
-	timeout = nil
+  self.timer:stop()
+  self.state = State.OVER
+  self.ui:draw(self)
+  if timeout ~= nil then
+    vim.o.timeoutlen = timeout
+  end
+  timeout = nil
 end
 
 return Game
