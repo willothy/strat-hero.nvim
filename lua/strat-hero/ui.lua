@@ -7,7 +7,7 @@
 ---Renders the view into NuiLines, and optionally mutates the window config.
 ---Return nil to not redraw the view. The win_config will only be updated if it's
 ---changed.
----@field render fun(game: StratHero.Game, win_config: vim.api.keyset.win_config): NuiLine[]?
+---@field render fun(game: StratHero.Game, win_config: vim.api.keyset.win_config, first_render: boolean): NuiLine[]?
 
 ---The UI for the game.
 ---The UI is managed by the Game object, and is *only* responsible for drawing its current
@@ -188,7 +188,7 @@ function Ui:draw(game)
 		end,
 	})
 
-	local lines = view.render(game, win_config_mutator)
+	local lines = view.render(game, win_config_mutator, new_view)
 
 	if lines then
 		if #lines < vim.api.nvim_buf_line_count(buf) then
