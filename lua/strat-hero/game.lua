@@ -74,23 +74,25 @@ local State = {
 ---
 ---@class StratHero.Game
 ---The current state of the game
----@field public state StratHero.State
+---@field state StratHero.State
 ---The current score
----@field public score number
+---@field score number
 ---The current round
----@field public round number
+---@field round number
 ---Reference to the active stratagem (null if state has not yet transitioned to "playing")
----@field public current StratHero.Stratagem
+---@field current StratHero.Stratagem
 ---The current input sequence index
----@field public entered integer
+---@field entered integer
+---The number of successful sequences
+---@field successes integer
 ---The game loop timer
 ---@field timer StratHero.Timer
----The time, in nanoseconds, at which the game countdown started
----@field started integer
----The time, in nanoseconds, at which the game *actually* started
----@field real_start integer Start with added countdown delay
----The time, in nanoseconds, that has elapsed since the game started
----@field elapsed integer
+---The time remaining in the current round, in nanoseconds
+---@field remaining integer
+---Last tick timestamp, in nanoseconds
+---@field last_tick integer
+---Whether the game has started or not
+---@field started boolean
 ---The list of available stratagems for this game (possibly filtered from the main list)
 ---@field stratagems StratHero.Stratagem[]
 ---The UI instance, see `strat-hero/ui.lua`
@@ -106,7 +108,6 @@ Game.STATE = State
 Game.MOTIONS = Motions
 
 ---TODO:
---- - A new state for the end of a round, with a delay before the next round starts
 --- - Speed bonus at the end of round = percentage of time remaining
 --- - Bonus points for perfect round = 100
 
@@ -154,6 +155,8 @@ function Game.new()
 	local self = setmetatable({}, { __index = Game })
 
 	self.state = State.READY
+	self.started = false
+
 	self.stratagems = Stratagems.list({})
 
 	self.ui = Ui.new()
@@ -176,12 +179,21 @@ end
 
 ---Steps the game forward by one tick, updating the UI and checking for win/lose conditions.
 function Game:tick()
-	self.elapsed = vim.uv.hrtime() - (self.real_start or 0) -- self.started
+	local time = vim.uv.hrtime()
+	local delta = time - self.last_tick
+	self.remaining = self.remaining - delta
+	self.last_tick = time
+
 	self.ui:draw(self)
 
-	-- if self.elapsed > Game.LENGTH then
-	-- 	self:stop()
-	-- end
+	if self.remaining <= 0 then
+		if self.state == State.PLAYING then
+			self:stop()
+		elseif self.state == State.STARTING then
+			self.remaining = self.TIME_LIMIT * 1e6
+			self.state = State.PLAYING
+		end
+	end
 end
 
 ---Handles a motion event, checking if it is the correct input for the current sequence.
@@ -224,10 +236,23 @@ end
 ---Triggers a success event, when the player correctly enters a full sequence.
 function Game:success()
 	self.score = self.score + (self.SUCCESS_POINTS * #self.current.sequence)
-	vim.defer_fn(function()
+	self.successes = self.successes + 1
+	self.remaining = self.remaining + (self.SUCCESS_TIME_BONUS * 1e6)
+
+	if self.successes >= self.BASE_LENGTH + self.round then
+		self.round = self.round + 1
+		self.successes = 0
+		self.stratagems = Stratagems.list({})
+		self.remaining = self.COUNTDOWN_DELAY * 1e6
 		self.current = self:pick_stratagem()
 		self.entered = 0
-	end, self.SUCCESS_DELAY)
+		self.state = State.STARTING
+	else
+		vim.defer_fn(function()
+			self.current = self:pick_stratagem()
+			self.entered = 0
+		end, self.SUCCESS_DELAY)
+	end
 end
 
 ---Triggers a failure event, when the player enters an incorrect motion.
@@ -243,11 +268,8 @@ end
 
 ---Shows the game UI, but doesn't start the game.
 function Game:show()
-	-- self.started = vim.uv.hrtime()
-	-- self.real_start = self.started + (self.COUNTDOWN_DELAY * 1e6)
-	-- self.elapsed = 0
 	self.ui:mount()
-	self.timer:start()
+	self.ui:draw(self)
 end
 
 ---Starts the game countdown, and then the game itself.
@@ -264,19 +286,19 @@ function Game:start()
 	self.score = 0
 	self.round = 1
 	self.entered = 0
+	self.successes = 0
+
 	self.current = self:pick_stratagem()
 
-	self.started = vim.uv.hrtime()
-	self.real_start = self.started + (self.COUNTDOWN_DELAY * 1e6)
-	self.elapsed = 0
+	self.started = true
 
-	self:show()
+	self.last_tick = vim.uv.hrtime()
+	self.timer:start()
 
+	self.remaining = self.COUNTDOWN_DELAY * 1e6
 	self.state = State.STARTING
 
-	vim.defer_fn(function()
-		self.state = State.PLAYING
-	end, self.COUNTDOWN_DELAY)
+	self:show()
 end
 
 ---Stops the game, and triggers the display of the game over UI.

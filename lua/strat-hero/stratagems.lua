@@ -647,9 +647,9 @@ function M.list(filter)
 		end
 	end
 
-	return iter:map(function(_, strat)
+	return M.shuffle(iter:map(function(_, strat)
 		return strat
-	end):totable()
+	end):totable())
 end
 
 ---@return string[]
@@ -667,6 +667,32 @@ function M.categories()
 			return true
 		end)
 		:totable()
+end
+
+---Picks a random element from a list
+---@generic T
+---@param list T[]
+---@return T?, integer?
+function M.pick(list)
+	local n = #list
+	if n == 0 then
+		return nil, nil
+	end
+	local i = math.random(1, n)
+	return list[i], i
+end
+
+---Shuffles a list in place
+---@generic T
+---@param list T[]
+---@return T[]
+function M.shuffle(list)
+	local n = #list
+	for i = 1, n do
+		local j = math.random(i, n)
+		list[i], list[j] = list[j], list[i]
+	end
+	return list
 end
 
 return M

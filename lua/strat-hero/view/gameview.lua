@@ -15,7 +15,16 @@ function GameView.render(game, win_config)
 		game.round
 	)
 
-	local percent_remaining = 1 - (math.max(0, (game.elapsed - game.COUNTDOWN_DELAY) / 1e6) / game.TIME_LIMIT)
+	local percent_remaining
+	if game.state == game.STATE.STARTING then
+		percent_remaining = (game.remaining / (game.COUNTDOWN_DELAY * 1e6))
+	elseif game.state == game.STATE.PLAYING or game.state == game.STATE.FAILED then
+		percent_remaining = (game.remaining / (game.TIME_LIMIT * 1e6))
+	elseif game.state == game.STATE.OVER then
+		percent_remaining = 0
+	elseif game.state == game.STATE.READY then
+		percent_remaining = 100
+	end
 
 	local raw_width = percent_remaining * 40
 	local bar_width = math.floor(raw_width)

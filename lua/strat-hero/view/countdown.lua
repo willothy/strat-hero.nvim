@@ -11,10 +11,10 @@ function Countdown.render(game, win_config)
 
 	win_config.footer = progress_blocks[8]:rep(40)
 
-	local countdown = (game.COUNTDOWN_DELAY - game.elapsed) / 1e9
+	local countdown = game.remaining / 1e9
 	return {
 		Line(),
-		Line({ Text("Get ready!", "Title") }),
+		Line({ Text(("Round %s"):format(game.round), "Title") }),
 		Line(),
 		Line({ Text(("Starting in %.1fs"):format(countdown), "Comment") }),
 		Line(),
