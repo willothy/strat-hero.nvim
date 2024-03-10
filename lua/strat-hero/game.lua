@@ -91,8 +91,6 @@ local State = {
 ---@field remaining integer
 ---Last tick timestamp, in nanoseconds
 ---@field last_tick integer
----Whether the game has started or not
----@field started boolean
 ---The list of available stratagems for this game (possibly filtered from the main list)
 ---@field stratagems StratHero.Stratagem[]
 ---The UI instance, see `strat-hero/ui.lua`
@@ -199,10 +197,15 @@ end
 ---Handles a motion event, checking if it is the correct input for the current sequence.
 ---@param motion StratHero.Motion
 function Game:on_key(motion)
-  if not self.started then
+  if
+    self.state == State.OVER -- restart
+    or self.state == State.READY -- initial load / start
+  then
     self:start()
     return
   end
+  -- State.FAILED is mostly a visual state, so if there's input we can just
+  -- reset the state to State.PLAYING so that correct motions are highlighted.
   if self.state == State.FAILED then
     self.state = State.PLAYING
   end
@@ -239,15 +242,26 @@ function Game:success()
   self.successes = self.successes + 1
   self.remaining = self.remaining + (self.SUCCESS_TIME_BONUS * 1e6)
 
+  -- TODO:
+  -- 100pts for perfect round
+  -- 100pts * percent of time remaining for speed bonus
+
   if self.successes >= self.BASE_LENGTH + self.round then
+    -- Advance to the next round
     self.round = self.round + 1
     self.successes = 0
+    -- Pick new stratagems for each round.
+    --
+    -- TODO: Increasing difficulty / length by round?
+    -- Not sure if the "reference implementation" does this but this seems harder than the original.
     self.stratagems = Stratagems.list({})
     self.remaining = self.COUNTDOWN_DELAY * 1e6
     self.current = self:pick_stratagem()
     self.entered = 0
     self.state = State.STARTING
   else
+    -- After a short delay to display the success, pick the next stratagem
+    -- and start the next sequence.
     vim.defer_fn(function()
       self.current = self:pick_stratagem()
       self.entered = 0
@@ -259,6 +273,9 @@ end
 function Game:fail()
   self.entered = 0
   self.state = State.FAILED
+  -- If the player fails, we want to give them a chance to see the mistake
+  -- before the game continues. Show the mistake for a short delay, or until
+  -- a key is pressed.
   vim.defer_fn(function()
     if self.state == State.FAILED then
       self.state = State.PLAYING
@@ -275,7 +292,7 @@ end
 ---Starts the game countdown, and then the game itself.
 ---Shows the game UI if it hasn't been shown yet.
 function Game:start()
-  if self.started and self.state ~= "over" then
+  if self.state ~= State.READY and self.state ~= State.OVER then
     return
   end
   if timeout == nil then
@@ -289,8 +306,6 @@ function Game:start()
   self.successes = 0
 
   self.current = self:pick_stratagem()
-
-  self.started = true
 
   self.last_tick = vim.uv.hrtime()
   self.timer:start()

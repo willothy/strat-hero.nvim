@@ -9,7 +9,10 @@ function Countdown.render(game, win_config)
   local Text = require("nui.text")
   local Line = require("nui.line")
 
+  win_config.title_pos = "center"
+  win_config.title = "Stratagem Hero"
   win_config.footer = progress_blocks[8]:rep(40)
+  win_config.footer_pos = "left"
 
   local countdown = game.remaining / 1e9
   return {

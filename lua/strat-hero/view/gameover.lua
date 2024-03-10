@@ -19,6 +19,8 @@ function Gameover.render(game, win_config, first_render)
 
   win_config.title = "Game Over"
   win_config.title_pos = "center"
+  win_config.footer = "Press a move key to restart"
+  win_config.footer_pos = "center"
 
   local score = tostring(game.score)
   local round = tostring(game.round)

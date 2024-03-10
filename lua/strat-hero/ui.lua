@@ -165,10 +165,6 @@ function Ui:draw(game)
 
   local win_config = vim.api.nvim_win_get_config(self.win)
 
-  local title = "Strategem Hero"
-  win_config.title = string.rep(" ", 20 - math.floor((#title / 2) + 0.5))
-    .. title
-
   local new_view = false
   local view = require("strat-hero.view." .. views[game.state]) ---@type StratHero.Ui.View
   if view ~= self.view then
@@ -193,7 +189,7 @@ function Ui:draw(game)
 
   if lines then
     if #lines < vim.api.nvim_buf_line_count(buf) then
-      vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
+      vim.api.nvim_buf_set_lines(buf, #lines - 1, -1, false, {})
     end
     vim
       .iter(lines)
