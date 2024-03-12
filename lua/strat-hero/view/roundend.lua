@@ -1,35 +1,35 @@
----Game over screen.
----@class StratHero.Ui.Gameover: StratHero.Ui.View
+---@class StratHero.Ui.RoundEnd: StratHero.Ui.View
 
----@type StratHero.Ui.Gameover
-local Gameover = {}
+---@type StratHero.Ui.RoundEnd
+local M = {}
 
 local function rpad(str, len)
   str = tostring(str or "")
   return str .. string.rep(" ", len - #str)
 end
 
-function Gameover.render(game, win_config, first_render)
+function M.render(game, win_config, first_render)
   if not first_render then
     return
   end
-
-  local Text = require("nui.text")
   local Line = require("nui.line")
+  local Text = require("nui.text")
 
-  win_config.title = "Game Over"
   win_config.title_pos = "center"
-  win_config.footer = "Press a move key to restart"
-  win_config.footer_pos = "center"
+  win_config.title = ""
+  win_config.footer = ""
 
-  local score = tostring(game.score)
-  local round = tostring(game.round)
+  local max_time_bonus = 100
+  local remaining = game.remaining / (game.TIME_LIMIT + (game.successes * 500))
+  local time_bonus = math.floor(max_time_bonus * remaining)
+
+  local perfect = game.failures == 0
 
   local rows = {
-    { "Score", score },
-    { "Round", round },
-    { "" },
-    { "High Score", "TODO" },
+    { "Score", game.score },
+    { "Bonus:" },
+    { "Time", tostring(time_bonus) },
+    { "Perfect", tostring(perfect and 100 or 0) },
   }
 
   local l_max = 0
@@ -44,7 +44,6 @@ function Gameover.render(game, win_config, first_render)
   return vim
     .iter(rows)
     :map(function(row)
-      --
       return Line({
         Text(rpad(row[1] or "", l_len), "Title"),
         Text(rpad(row[2] or "", r_len), "DiagnosticWarn"),
@@ -53,4 +52,4 @@ function Gameover.render(game, win_config, first_render)
     :totable()
 end
 
-return Gameover
+return M

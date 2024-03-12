@@ -62,14 +62,14 @@ local State = {
 ---
 ---        move key            countdown           out of time
 ---  Ready──────────► Starting───────────► Playing─────────────► Over
----                                         ▲  │                  ▲
----                           end of delay, │  │<bad input        │<out of time
----                           or new *good*>│  │                  │
----                           input         │  └─────────► Failed─┘
----                                         │    ▲           │
----                                         │    │<bad input │
----                                         └────┴───────────┘
----                                         has time remaining
+---                      ▲                  │▲  │                  ▲
+---                      │   end of delay,  ││  │<bad input        │<out of time
+---                      │   or new *good*> ││  │                  │
+---                      │   input          ││  └─────────► Failed─┘
+---                      │                  ││    ▲           │
+---                      └──────────────────┘│    │<bad input │
+---                           round end      └────┴───────────┘
+---                                          has time remaining
 ---```
 ---
 ---@class StratHero.Game
@@ -85,6 +85,8 @@ local State = {
 ---@field entered integer
 ---The number of successful sequences
 ---@field successes integer
+---Number of failed sequences, for stat tracking and perfect round bonus
+---@field failures integer
 ---The game loop timer
 ---@field timer StratHero.Timer
 ---The time remaining in the current round, in nanoseconds
@@ -250,6 +252,19 @@ function Game:success()
     -- Advance to the next round
     self.round = self.round + 1
     self.successes = 0
+    self.failures = 0
+
+    if self.failures == 0 then
+      self.score = self.score + 100
+    end
+
+    local remaining = self.remaining
+      / (self.TIME_LIMIT + (self.successes * 500))
+    local time_bonus = math.floor(remaining * 100)
+    self.score = self.score + time_bonus
+
+    -- TODO: Show round end UI instead of countdown here
+
     -- Pick new stratagems for each round.
     --
     -- TODO: Increasing difficulty / length by round?
@@ -273,6 +288,7 @@ end
 function Game:fail()
   self.entered = 0
   self.state = State.FAILED
+  self.failures = self.failures + 1
   -- If the player fails, we want to give them a chance to see the mistake
   -- before the game continues. Show the mistake for a short delay, or until
   -- a key is pressed.
@@ -304,6 +320,7 @@ function Game:start()
   self.round = 1
   self.entered = 0
   self.successes = 0
+  self.failures = 0
 
   self.current = self:pick_stratagem()
 
