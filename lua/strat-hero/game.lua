@@ -230,6 +230,12 @@ function Game:tick()
   end
 end
 
+---Registers a callback for when the game is closed.
+---@param fn fun()
+function Game:on_close(fn)
+  self.ui:on("BufLeave", fn)
+end
+
 ---Handles a motion event, checking if it is the correct input for the current sequence.
 ---@param motion StratHero.Motion
 function Game:on_key(motion)

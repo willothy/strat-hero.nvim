@@ -20,6 +20,9 @@ local function with_game(cb, check)
     end
   else
     running = Game.new()
+    running:on_close(function()
+      running = nil
+    end)
   end
   cb(running)
 end
@@ -156,9 +159,18 @@ function M.execute(args)
       if args.bang then
         running:hide()
         running = nil
+      elseif
+        running.state == Game.STATE.OVER
+        or running.state == Game.STATE.READY
+      then
+        running:hide()
+        running = nil
       end
     else
       running = Game.new()
+      running:on_close(function()
+        running = nil
+      end)
       running:show()
     end
     return
