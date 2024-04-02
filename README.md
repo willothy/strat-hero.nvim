@@ -1,3 +1,4 @@
+<!-- panvimdoc-ignore-start -->
 <h1 align='center'>
   strat-hero.nvim
 </h1>
@@ -5,6 +6,11 @@
 <p align='center'>
   Practice your Helldivers 2 stratagems in Neovim. For Super Earth!
 </p>
+<!-- panvimdoc-ignore-end -->
+
+<!-- panvimdoc-include-comment
+# strat-hero.nvim
+-->
 
 ## Installation
 
@@ -26,25 +32,25 @@ require("lazy").setup({
 The plugin provides a command `StratHero` that will open a new buffer with the game ready to start. It also has a few subcommands to
 control the game.
 
-### `:StratHero{!}`
+#### `:StratHero[!]`
 
 Opens the game UI if it is not already open. Does nothing if the UI is open or the game is running.
 
 When `:h <bang>` is provided, toggles the game UI, regardless of whether the game is running. Interrupts game progress.
 
-### `:StratHero open`
+#### `:StratHero open`
 
 Starts the game if it has not already been started. Does nothing if the game is running.
 
-### `:StratHero start`
+#### `:StratHero start`
 
 Starts the game if it has not already been started. Does nothing if the game is running.
 
-### `:StratHero stop`
+#### `:StratHero stop`
 
 Stops an in-progress game, but does not close the UI.
 
-### `:StratHero close`
+#### `:StratHero close`
 
 Stops any in-progress game and closes the UI.
 
