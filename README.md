@@ -8,10 +8,6 @@
 </p>
 <!-- panvimdoc-ignore-end -->
 
-<!-- panvimdoc-include-comment
-# strat-hero.nvim
--->
-
 ## Installation
 
 With [`folke/lazy.nvim`](https://github.com/folke/lazy.nvim):
