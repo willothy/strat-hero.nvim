@@ -7,7 +7,7 @@ Table of Contents                               *strat-hero-table-of-contents*
   - Usage                                                   |strat-hero-usage|
   - Mappings                                             |strat-hero-mappings|
   - Contributing                                     |strat-hero-contributing|
-strat-hero.nvimPractice your Helldivers 2 stratagems in Neovim. For Super Earth!
+
 INSTALLATION                                         *strat-hero-installation*
 
 With `folke/lazy.nvim` <https://github.com/folke/lazy.nvim>
@@ -30,7 +30,7 @@ Theplugin provides a command `StratHero` that will open a new buffer with the
 game ready to start. It also has a few subcommands to control the game.
 
 
-:STRATHERO{!} ~
+:StratHero[!]                                          *strat-hero-:StratHero*
 
 Opens the game UI if it is not already open. Does nothing if the UI is open or
 the game is running.
@@ -39,24 +39,24 @@ When |<bang>| is provided, toggles the game UI, regardless of whether the game
 is running. Interrupts game progress.
 
 
-:STRATHERO OPEN ~
+:StratHero open                                   *strat-hero-:StratHero-open*
 
 Starts the game if it has not already been started. Does nothing if the game is
 running.
 
 
-:STRATHERO START ~
+:StratHero start                                 *strat-hero-:StratHero-start*
 
 Starts the game if it has not already been started. Does nothing if the game is
 running.
 
 
-:STRATHERO STOP ~
+:StratHero stop                                   *strat-hero-:StratHero-stop*
 
 Stops an in-progress game, but does not close the UI.
 
 
-:STRATHERO CLOSE ~
+:StratHero close                                 *strat-hero-:StratHero-close*
 
 Stops any in-progress game and closes the UI.
 
