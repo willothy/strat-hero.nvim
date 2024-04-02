@@ -14,7 +14,6 @@ function Gameover.render(game, win_config, first_render)
     return
   end
 
-  local Text = require("nui.text")
   local Line = require("nui.line")
 
   win_config.title = string.format("Round %d Over", game.round - 1)
@@ -24,12 +23,20 @@ function Gameover.render(game, win_config, first_render)
 
   local score = tostring(game.score)
   local round = tostring(game.round)
+  local time_bonus = tostring(game.last_time_bonus)
+
+  local perfect = game.last_failures == 0
+  local perfect_bonus = perfect and tostring(game.PERFECT_ROUND_BONUS) or "0"
 
   local rows = {
-    { "Score", tostring(score) },
-    { "Round", tostring(round) },
     { "" },
-    { "Time Bonus", tostring(game.last_time_bonus) },
+    { "Score", score },
+    { "Round", round },
+    { "Time Bonus", time_bonus },
+    {
+      "Perfect Round",
+      perfect_bonus,
+    },
   }
 
   local l_max = 0
@@ -41,17 +48,19 @@ function Gameover.render(game, win_config, first_render)
   local l_len = l_max + 2
   local r_len = r_max
 
-  return {
-    Line(),
-    Line({
-      Text(rpad("Score", l_len), "Title"),
-      Text(rpad(tostring(game.score), r_len), "DiagnosticWarn"),
-    }),
-    Line({
-      Text(rpad("Time Bonus", l_len), "Title"),
-      Text(rpad(tostring(game.last_time_bonus), r_len), "DiagnosticWarn"),
-    }),
-  }
+  return vim
+    .iter(rows)
+    :map(function(row)
+      local line = Line()
+      if row[1] then
+        line:append(rpad(row[1], l_len), "Title")
+      end
+      if row[2] then
+        line:append(rpad(row[2], r_len), "DiagnosticWarn")
+      end
+      return line
+    end)
+    :totable()
 end
 
 return Gameover

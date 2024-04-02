@@ -107,6 +107,8 @@ local Views = {
 ---@field last_tick integer
 ---The last time bonus awarded. Only valid during the `round_end` state.
 ---@field last_time_bonus integer
+---The last round's failure count. Only valid during the `round_end` state.
+---@field last_failures integer
 ---The list of available stratagems for this game (possibly filtered from the main list)
 ---@field stratagems StratHero.Stratagem[]
 ---The UI instance, see `strat-hero/ui.lua`
@@ -146,6 +148,9 @@ Game.BASE_LENGTH = 5
 ---Bonus time for a successful sequence, in milliseconds.
 ---@type integer
 Game.SUCCESS_TIME_BONUS = 500
+---Bonus points for a perfect round.
+---@type integer
+Game.PERFECT_ROUND_BONUS = 100
 ---Number of points awarded for *each motion* of a successful sequence.
 ---@type integer
 Game.SUCCESS_POINTS = 5
@@ -274,18 +279,17 @@ function Game:success()
   self.score = self.score + (self.SUCCESS_POINTS * #self.current.sequence)
   self.successes = self.successes + 1
 
-  -- TODO:
-  -- 100pts for perfect round
-
   if self.successes >= self.BASE_LENGTH + self.round then
     -- Grant perfect round and time bonus
-    local remaining = self.remaining
-      / (self.TIME_LIMIT + (self.successes * 1e6))
-    local time_bonus = math.floor(remaining * 100)
+    local time_bonus =
+      math.floor(((self.remaining / 1e6) / self.TIME_LIMIT) * 100)
     self.score = self.score + time_bonus
 
+    self.last_time_bonus = time_bonus
+    self.last_failures = self.failures
+
     if self.failures == 0 then
-      self.score = self.score + 100
+      self.score = self.score + self.PERFECT_ROUND_BONUS
     end
 
     -- Advance to the next round
