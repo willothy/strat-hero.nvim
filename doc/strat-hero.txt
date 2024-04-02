@@ -4,7 +4,7 @@
 Table of Contents                               *strat-hero-table-of-contents*
 
   - Installation                                     |strat-hero-installation|
-  - Usage                                                   |strat-hero-usage|
+  - Commands                                             |strat-hero-commands|
   - Mappings                                             |strat-hero-mappings|
   - Contributing                                     |strat-hero-contributing|
 
@@ -24,39 +24,36 @@ With `folke/lazy.nvim` <https://github.com/folke/lazy.nvim>
 <
 
 
-USAGE                                                       *strat-hero-usage*
-
-Theplugin provides a command `StratHero` that will open a new buffer with the
-game ready to start. It also has a few subcommands to control the game.
+COMMANDS                                                 *strat-hero-commands*
 
 
-:StratHero[!]                                          *strat-hero-:StratHero*
+:StratHero[!]                                                     *:StratHero*
 
-Opens the game UI if it is not already open. Does nothing if the UI is open or
+Opensthe game UI if it is not already open. Does nothing if the UI is open or
 the game is running.
 
 When |<bang>| is provided, toggles the game UI, regardless of whether the game
 is running. Interrupts game progress.
 
 
-:StratHero open                                   *strat-hero-:StratHero-open*
+:StratHero open                                              *:StratHero-open*
 
 Starts the game if it has not already been started. Does nothing if the game is
 running.
 
 
-:StratHero start                                 *strat-hero-:StratHero-start*
+:StratHero start                                            *:StratHero-start*
 
 Starts the game if it has not already been started. Does nothing if the game is
 running.
 
 
-:StratHero stop                                   *strat-hero-:StratHero-stop*
+:StratHero stop                                              *:StratHero-stop*
 
 Stops an in-progress game, but does not close the UI.
 
 
-:StratHero close                                 *strat-hero-:StratHero-close*
+:StratHero close                                            *:StratHero-close*
 
 Stops any in-progress game and closes the UI.
 
