@@ -1,18 +1,17 @@
 local M = {}
 
 -- TODO:
--- 0. Round transition screen
---    - Overview of round score, time, bonuses
---    - Actually give time and perfect round bonuses
 -- 1. Start game with filters
 -- 2. More advanced filters
--- 3. Finish UI
--- 4. Subcommands / bang to stop / restart the game
--- 5. Mode-specific games (limit to wasd, hjkl, etc.)
--- 6. Score history and stats
--- 7. Leaderboard (?)
--- 8. Tests
--- 9. Docs
+--    - Unlock level
+--    - Sequence length
+-- 3. Subcommands / bang to stop / restart the game
+-- 4. Mode-specific games (limit to wasd, hjkl, etc.)
+-- 5. Score history and stats
+-- 6. Leaderboard (?)
+-- 7. Tests
+-- 8. Docs
+-- 9. Add stratagems from new updates
 
 function M.setup()
   local Game = require("strat-hero.game")

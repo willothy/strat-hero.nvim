@@ -164,7 +164,7 @@ Game.TICKRATE = 25 -- 40 fps is maybe a bit much?
 ---The delay in milliseconds before the next stratagem is shown / the next round starts.
 ---@type integer
 Game.SUCCESS_DELAY = 150
----The delay in milliseconds before the mistake UI is hidden.
+---The delay in milliseconds before the mistake UI is hidden. Can be shortened by pressing a key.
 ---@type integer
 Game.MISTAKE_DELAY = 300
 ---The delay in milliseconds before the game starts.
