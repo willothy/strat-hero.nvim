@@ -340,6 +340,12 @@ function Game:show()
   self.ui:draw(self)
 end
 
+---Hides the game UI, and stops the game.
+function Game:hide()
+  self:stop()
+  self.ui:unmount()
+end
+
 ---Starts the game countdown, and then the game itself.
 ---Shows the game UI if it hasn't been shown yet.
 function Game:start()
