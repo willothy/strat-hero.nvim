@@ -13,9 +13,6 @@ local M = {}
 -- 7. Leaderboard (?)
 -- 8. Tests
 -- 9. Docs
--- 10. Refactor views to simplify game/ui interactions and interface
---    - Ideally, the game should pass the composed view + state to the UI, and the UI should *just* handle drawing it.
---    - I don't like having to pass the game to `Ui:draw`, it kinda breaks the encapsulation.
 
 function M.setup()
   local Game = require("strat-hero.game")

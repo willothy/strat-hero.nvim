@@ -42,9 +42,20 @@ local State = {
   PLAYING = "playing",
   FAILED = "failed",
   OVER = "over",
+  ROUND_END = "round_end",
 }
 
----@alias StratHero.State "ready" | "starting" | "playing" | "failed" | "over"
+---@alias StratHero.State "ready" | "starting" | "playing" | "failed" | "over" | "round_end"
+
+---@type table<StratHero.State, string>
+local Views = {
+  [State.READY] = "splash",
+  [State.STARTING] = "countdown",
+  [State.PLAYING] = "game_view",
+  [State.FAILED] = "game_view",
+  [State.OVER] = "game_over",
+  [State.ROUND_END] = "round_end",
+}
 
 ---The core game object. It is responsible for managing the game loop, state,
 ---and UI, as well as handling user input.
@@ -57,10 +68,11 @@ local State = {
 --- - over: the game is over (there is no "lose" state, the game is score-based)
 ---
 ---State transitions:
----
 ---```plaintext
 ---
----        move key            countdown           out of time
+---                       ┌─── Round End ◄───┐ <entered all motions
+---                       │                  │
+---        move key       ▼    countdown     │     out of time
 ---  Ready──────────► Starting───────────► Playing─────────────► Over
 ---                      ▲                  │▲  │                  ▲
 ---                      │   end of delay,  ││  │<bad input        │<out of time
@@ -93,6 +105,8 @@ local State = {
 ---@field remaining integer
 ---Last tick timestamp, in nanoseconds
 ---@field last_tick integer
+---The last time bonus awarded. Only valid during the `round_end` state.
+---@field last_time_bonus integer
 ---The list of available stratagems for this game (possibly filtered from the main list)
 ---@field stratagems StratHero.Stratagem[]
 ---The UI instance, see `strat-hero/ui.lua`
@@ -103,6 +117,9 @@ local Game = {}
 
 ---Mapping of game states to ease development.
 Game.STATE = State
+
+---Mapping of game states to view names.
+Game.VIEWS = Views
 
 ---Mapping of Vim pseudokeys to game motions.
 Game.MOTIONS = Motions
@@ -165,6 +182,15 @@ function Game.new()
       self:on_key(motion)
     end)
   end
+  self.ui:map("<Esc>", function()
+    self:stop()
+    self.ui:unmount()
+  end)
+  self.ui:map("q", function()
+    if self.state == State.OVER or self.state == State.READY then
+      self.ui:unmount()
+    end
+  end)
   self.ui:on("BufLeave", function()
     self:stop()
     self.ui:unmount()
@@ -192,6 +218,9 @@ function Game:tick()
     elseif self.state == State.STARTING then
       self.remaining = self.TIME_LIMIT * 1e6
       self.state = State.PLAYING
+    elseif self.state == State.ROUND_END then
+      self.state = State.STARTING
+      self.remaining = self.COUNTDOWN_DELAY * 1e6
     end
   end
 end
@@ -210,6 +239,8 @@ function Game:on_key(motion)
   -- reset the state to State.PLAYING so that correct motions are highlighted.
   if self.state == State.FAILED then
     self.state = State.PLAYING
+  elseif self.state ~= State.PLAYING then
+    return
   end
   local expected = self.current.sequence[self.entered + 1]
 
@@ -242,28 +273,25 @@ end
 function Game:success()
   self.score = self.score + (self.SUCCESS_POINTS * #self.current.sequence)
   self.successes = self.successes + 1
-  self.remaining = self.remaining + (self.SUCCESS_TIME_BONUS * 1e6)
 
   -- TODO:
   -- 100pts for perfect round
-  -- 100pts * percent of time remaining for speed bonus
 
   if self.successes >= self.BASE_LENGTH + self.round then
-    -- Advance to the next round
-    self.round = self.round + 1
-    self.successes = 0
-    self.failures = 0
+    -- Grant perfect round and time bonus
+    local remaining = self.remaining
+      / (self.TIME_LIMIT + (self.successes * 1e6))
+    local time_bonus = math.floor(remaining * 100)
+    self.score = self.score + time_bonus
 
     if self.failures == 0 then
       self.score = self.score + 100
     end
 
-    local remaining = self.remaining
-      / (self.TIME_LIMIT + (self.successes * 500))
-    local time_bonus = math.floor(remaining * 100)
-    self.score = self.score + time_bonus
-
-    -- TODO: Show round end UI instead of countdown here
+    -- Advance to the next round
+    self.round = self.round + 1
+    self.successes = 0
+    self.failures = 0
 
     -- Pick new stratagems for each round.
     --
@@ -273,8 +301,11 @@ function Game:success()
     self.remaining = self.COUNTDOWN_DELAY * 1e6
     self.current = self:pick_stratagem()
     self.entered = 0
-    self.state = State.STARTING
+    self.state = State.ROUND_END
   else
+    -- Grant time bonus for successful sequence
+    self.remaining = self.remaining + (self.SUCCESS_TIME_BONUS * 1e6)
+
     -- After a short delay to display the success, pick the next stratagem
     -- and start the next sequence.
     vim.defer_fn(function()

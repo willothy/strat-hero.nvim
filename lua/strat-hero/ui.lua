@@ -21,15 +21,6 @@
 ---@field ns integer
 local Ui = {}
 
----@type table<StratHero.State, string>
-local views = {
-  ready = "splash",
-  starting = "countdown",
-  playing = "gameview",
-  failed = "gameview",
-  over = "gameover",
-}
-
 ---Creates a new Ui instance.
 ---@return StratHero.Ui
 function Ui.new()
@@ -129,20 +120,15 @@ function Ui:mount()
   })
 end
 
----@class StratHero.Ui.KeymapOpts
----@field mode string? The mode to map the key in. Default: "n"
----@field expr boolean? Whether to use an expression mapping.
-
 ---Creates a buffer-local mapping for the Ui.
 ---@param key string
 ---@param action fun() | string
----@param opts StratHero.Ui.KeymapOpts?
-function Ui:map(key, action, opts)
+---@param opts vim.keymap.set.Opts?
+---@param mode string?
+function Ui:map(key, action, opts, mode)
   opts = opts or {}
+  mode = mode or "n"
   local buf = self:get_buf()
-
-  local mode = opts.mode or "n"
-  opts.mode = nil
 
   vim.keymap.set(
     mode,
@@ -166,7 +152,7 @@ function Ui:draw(game)
   local win_config = vim.api.nvim_win_get_config(self.win)
 
   local new_view = false
-  local view = require("strat-hero.view." .. views[game.state]) ---@type StratHero.Ui.View
+  local view = require("strat-hero.view." .. game.VIEWS[game.state]) ---@type StratHero.Ui.View
   if view ~= self.view then
     self.view = view
     new_view = true
