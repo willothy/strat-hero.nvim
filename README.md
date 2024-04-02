@@ -23,10 +23,7 @@ require("lazy").setup({
 })
 ```
 
-## Usage
-
-The plugin provides a command `StratHero` that will open a new buffer with the game ready to start. It also has a few subcommands to
-control the game.
+## Commands
 
 #### `:StratHero[!]`
 
