@@ -14,23 +14,7 @@ local M = {}
 -- 9. Add stratagems from new updates
 
 function M.setup()
-  local Game = require("strat-hero.game")
-  vim.api.nvim_create_user_command("StratHero", function()
-    -- NOTE: just for debugging
-    pcall(function()
-      if _G.game then
-        _G.game:stop()
-        _G.game = nil
-      end
-    end)
-    local game = Game.new()
-    game:show()
-
-    _G.game = game
-  end, {
-    nargs = 0,
-    bang = false,
-  })
+  require("strat-hero.command").setup()
 end
 
 return M
