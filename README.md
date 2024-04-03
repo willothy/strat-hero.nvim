@@ -6,6 +6,10 @@
 <p align='center'>
   Practice your Helldivers 2 stratagems in Neovim. For Super Earth!
 </p>
+
+https://github.com/willothy/strat-hero.nvim/assets/38540736/016b6d41-63c2-4c0d-9d97-cfe166e2fecc
+
+
 <!-- panvimdoc-ignore-end -->
 
 ## Installation
