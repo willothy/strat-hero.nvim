@@ -16,6 +16,9 @@ With `folke/lazy.nvim` <https://github.com/folke/lazy.nvim>
     require("lazy").setup({
       {
         "willothy/strat-hero.nvim",
+        dependencies = {
+          "MunifTanjim/nui.nvim"
+        },
         config = true,
         lazy = true,
         cmd = "StratHero"
