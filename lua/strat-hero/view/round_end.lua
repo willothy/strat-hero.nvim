@@ -2,14 +2,14 @@
 ---@class StratHero.Ui.RoundEnd: StratHero.Ui.View
 
 ---@type StratHero.Ui.RoundEnd
-local Gameover = {}
+local RoundEnd = {}
 
 local function rpad(str, len)
   str = tostring(str or "")
   return str .. string.rep(" ", len - string.len(str))
 end
 
-function Gameover.render(game, win_config, first_render)
+function RoundEnd.render(game, win_config, first_render)
   if not first_render then
     return
   end
@@ -63,4 +63,4 @@ function Gameover.render(game, win_config, first_render)
     :totable()
 end
 
-return Gameover
+return RoundEnd
