@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/willothy/strat-hero.nvim/compare/v1.0.0...v1.0.1) (2024-04-16)
+
+
+### Bug Fixes
+
+* add timeout before move keys restart the game ([1cc5a10](https://github.com/willothy/strat-hero.nvim/commit/1cc5a105cbb8c15996e241383d5bfc64a8445252))
+
 ## 1.0.0 (2024-04-02)
 
 
