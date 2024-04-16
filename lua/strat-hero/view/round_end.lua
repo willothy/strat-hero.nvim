@@ -31,7 +31,7 @@ function RoundEnd.render(game, win_config, first_render)
   local rows = {
     { "" },
     { "Score", score },
-    { "Round", round },
+    { "" },
     { "Time Bonus", time_bonus },
     {
       "Perfect Round",

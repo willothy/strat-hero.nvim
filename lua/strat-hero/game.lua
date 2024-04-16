@@ -41,11 +41,12 @@ local State = {
   STARTING = "starting",
   PLAYING = "playing",
   FAILED = "failed",
+  ENDING = "ending",
   OVER = "over",
   ROUND_END = "round_end",
 }
 
----@alias StratHero.State "ready" | "starting" | "playing" | "failed" | "over" | "round_end"
+---@alias StratHero.State "ready" | "starting" | "playing" | "failed" | "ending" | "over" | "round_end"
 
 ---@type table<StratHero.State, string>
 local Views = {
@@ -54,6 +55,7 @@ local Views = {
   [State.PLAYING] = "game_view",
   [State.FAILED] = "game_view",
   [State.OVER] = "game_over",
+  [State.ENDING] = "game_over",
   [State.ROUND_END] = "round_end",
 }
 
@@ -73,14 +75,14 @@ local Views = {
 ---                       ┌─── Round End ◄───┐ <entered all motions
 ---                       │                  │
 ---        move key       ▼    countdown     │     out of time
----  Ready──────────► Starting───────────► Playing─────────────► Over
----                      ▲                  │▲  │                  ▲
----                      │   end of delay,  ││  │<bad input        │<out of time
----                      │   or new *good*> ││  │                  │
----                      │   input          ││  └─────────► Failed─┘
----                      │                  ││    ▲           │
----                      └──────────────────┘│    │<bad input │
----                           round end      └────┴───────────┘
+---  Ready──────────► Starting───────────► Playing─────────────► Ending ───► Over
+---                                          ▲  │                  ▲
+---                            end of delay, │  │<bad input        │<out of time
+---                            or new *good*>│  │                  │
+---                            input         │  └─────────► Failed─┘
+---                                          │    ▲           │
+---                                          │    │<bad input │
+---                                          └────┴───────────┘
 ---                                          has time remaining
 ---```
 ---
@@ -126,10 +128,6 @@ Game.VIEWS = Views
 ---Mapping of Vim pseudokeys to game motions.
 Game.MOTIONS = Motions
 
----TODO:
---- - Speed bonus at the end of round = percentage of time remaining
---- - Bonus points for perfect round = 100
-
 ---Configuration (probably shouldn't be changed though)
 
 ---NOTE: These values may not be perfectly accurate to what is in Helldivers 2.
@@ -170,6 +168,9 @@ Game.MISTAKE_DELAY = 300
 ---The delay in milliseconds before the game starts.
 ---@type integer
 Game.COUNTDOWN_DELAY = 3000
+---The delay in milliseconds before a move key can restart the game.
+---@type integer
+Game.GAME_OVER_DELAY = 2500
 
 ---Creates a new game instance, sets up the UI and input handling, and returns it.
 ---@return StratHero.Game
@@ -192,7 +193,7 @@ function Game.new()
     self.ui:unmount()
   end)
   self.ui:map("q", function()
-    if self.state == State.OVER or self.state == State.READY then
+    if not self:is_running() then
       self.ui:unmount()
     end
   end)
@@ -208,6 +209,10 @@ function Game.new()
   return self
 end
 
+function Game:is_running()
+  return self.state ~= State.READY and self.state ~= State.OVER
+end
+
 ---Steps the game forward by one tick, updating the UI and checking for win/lose conditions.
 function Game:tick()
   local time = vim.uv.hrtime()
@@ -219,7 +224,10 @@ function Game:tick()
 
   if self.remaining <= 0 then
     if self.state == State.PLAYING then
-      self:stop()
+      self.state = State.ENDING
+      self.remaining = self.GAME_OVER_DELAY * 1e6
+    elseif self.state == State.ENDING then
+      self.state = State.OVER
     elseif self.state == State.STARTING then
       self.remaining = self.TIME_LIMIT * 1e6
       self.state = State.PLAYING
@@ -239,11 +247,10 @@ end
 ---Handles a motion event, checking if it is the correct input for the current sequence.
 ---@param motion StratHero.Motion
 function Game:on_key(motion)
-  if
-    self.state == State.OVER -- restart
-    or self.state == State.READY -- initial load / start
-  then
+  if not self:is_running() then
     self:start()
+    return
+  elseif self.state == State.ENDING then
     return
   end
   -- State.FAILED is mostly a visual state, so if there's input we can just
@@ -386,6 +393,7 @@ end
 function Game:stop()
   self.timer:stop()
   self.state = State.OVER
+  self.remaining = self.COUNTDOWN_DELAY * 1e6
   self.ui:draw(self)
   if timeout ~= nil then
     vim.o.timeoutlen = timeout

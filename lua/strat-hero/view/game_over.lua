@@ -10,24 +10,29 @@ local function rpad(str, len)
 end
 
 function Gameover.render(game, win_config, first_render)
-  if not first_render then
-    return
-  end
-
   local Text = require("nui.text")
   local Line = require("nui.line")
 
   win_config.title = "Game Over"
   win_config.title_pos = "center"
-  win_config.footer = "Press a move key to restart"
+  if game.state == game.STATE.OVER then
+    win_config.footer = "Press a move key to restart"
+  else
+    win_config.footer = ""
+  end
   win_config.footer_pos = "center"
 
+  if not first_render then
+    return
+  end
+
   local score = tostring(game.score)
-  local round = tostring(game.round)
+  local rounds = tostring(game.round - 1)
 
   local rows = {
+    { "" },
+    { "Rounds", rounds },
     { "Score", score },
-    { "Round", round },
     { "" },
     { "High Score", "TODO" },
   }

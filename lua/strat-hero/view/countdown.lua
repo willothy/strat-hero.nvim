@@ -14,7 +14,7 @@ function Countdown.render(game, win_config)
   win_config.footer = progress_blocks[8]:rep(40)
   win_config.footer_pos = "left"
 
-  local countdown = game.remaining / 1e9
+  local countdown = math.max(0, game.remaining) / 1e9
   return {
     Line(),
     Line({ Text(("Round %s"):format(game.round), "Title") }),
